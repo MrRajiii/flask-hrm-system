@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Departmental Organization</h2>
+
+<div class="row">
+    {% for dept, staff_list in org_data.items() %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card shadow-sm border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">{{ dept }}</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for emp in staff_list %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ emp.full_name }}</strong><br>
+                        <small class="text-muted">{{ emp.job_position.title if emp.job_position else 'No Position Set' }}</small>
+                    </div>
+                    <form action="{{ url_for('update_status', emp_id=emp.id) }}" method="POST" class="d-inline">
+                        <select name="status" onchange="this.form.submit()" class="form-select form-select-sm border-0 bg-light">
+                            <option value="Active">Active</option>
+                            <option value="On Leave">On Leave</option>
+                            <option value="Sick">Sick</option>
+                        </select>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="pb-2 mt-4 mb-3 border-bottom">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h2">{{ current_user.role }} Dashboard</h1>
+            <p class="text-muted">Welcome back, {{ current_user.full_name }}.</p>
+        </div>
+        <span class="badge bg-dark p-2">{{ current_user.department }} Department</span>
+    </div>
+</div>
+
+{# --- 1. COMPANY OWNER DASHBOARD --- #}
+{% if current_user.role == 'Company Owner' %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-primary text-white shadow border-0">
+            <div class="card-body">
+                <h5>Total Employees</h5>
+                <h2 class="display-4">{{ stats.employees }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-success text-white shadow border-0">
+            <div class="card-body">
+                <h5>Active Clients</h5>
+                <h2 class="display-4">{{ stats.clients }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-info text-white shadow border-0">
+            <div class="card-body">
+                <h5>Open Positions</h5>
+                <h2 class="display-4">{{ stats.positions }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-white font-weight-bold">Executive Overview</div>
+    <div class="card-body">
+        <p>Strategic Insight: You are currently overseeing {{ org_data|length }} active departments.</p>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('view_clients') }}" class="btn btn-outline-primary">Manage Clients</a>
+            <a href="{{ url_for('view_positions') }}" class="btn btn-outline-secondary">System Config</a>
+        </div>
+    </div>
+</div>
+
+{# --- 2. HR TEAM & MANAGER (LEAVE APPROVAL VIEW) --- #}
+{% elif current_user.role in ['HR Team', 'Manager'] %}
+<div class="row">
+    <div class="{% if current_user.role == 'HR Team' %}col-md-6{% else %}col-md-12{% endif %} mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Pending Leave Requests</h5>
+                <span class="badge bg-danger">{{ leaves|length }} New</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Employee</th>
+                            <th>Type</th>
+                            <th>Duration</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in leaves %}
+                        <tr>
+                            <td><strong>{{ leave.employee.full_name }}</strong></td>
+                            <td><span class="badge bg-info text-dark">{{ leave.leave_type }}</span></td>
+                            <td>{{ leave.start_date.strftime('%b %d') }} - {{ leave.end_date.strftime('%b %d') }}</td>
+                            <td>
+                                <a href="{{ url_for('approve_leave', leave_id=leave.id) }}" class="btn btn-sm btn-success">Approve</a>
+                                <a href="{{ url_for('reject_leave', leave_id=leave.id) }}" class="btn btn-sm btn-outline-danger">Reject</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">No pending requests found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if current_user.role == 'HR Team' %}
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm bg-dark text-white p-3">
+            <h5>Quick HR Actions</h5>
+            <hr>
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('register') }}" class="btn btn-primary text-start"><i class="bi bi-person-plus"></i> Onboard New Employee</a>
+                <a href="{{ url_for('payroll') }}" class="btn btn-success text-start"><i class="bi bi-cash-stack"></i> Run Monthly Payroll</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{# --- 3. EMPLOYEE DASHBOARD --- #}
+{% else %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h4 class="card-title">Employment Status</h4>
+                <hr>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <p class="mb-1 text-muted small">Role</p>
+                        <p class="fw-bold">{{ current_user.role }}</p>
+                    </div>
+                    <div class="col-sm-6 text-end">
+                        <p class="mb-1 text-muted small">Status</p>
+                        <span class="badge bg-success">{{ current_user.status }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">My Recent Leave Requests</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Type</th>
+                            <th>Start Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in leaves %}
+                        <tr>
+                            <td>{{ leave.leave_type }}</td>
+                            <td>{{ leave.start_date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {% if leave.status == 'Pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif leave.status == 'Approved' %}
+                                <span class="badge bg-success">Approved</span>
+                                {% else %}
+                                <span class="badge bg-danger">Rejected</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">No leave requests found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body text-center">
+                <h5 class="fw-bold">Time Clock</h5>
+                <p class="small text-muted mb-3">Current Time: <span id="live-clock" class="fw-bold text-primary">--:--:--</span></p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('clock_in') }}" class="btn btn-success btn-lg py-3">
+                        <i class="bi bi-play-circle me-2"></i> Clock In
+                    </a>
+                    <a href="{{ url_for('clock_out') }}" class="btn btn-danger btn-lg py-3">
+                        <i class="bi bi-stop-circle me-2"></i> Clock Out
+                    </a>
+                    <hr>
+                    <a href="{{ url_for('apply_leave') }}" class="btn btn-outline-primary py-2">
+                        <i class="bi bi-calendar-event me-2"></i> Request Leave
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    function updateClock() {
+        const now = new Date();
+        const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        document.getElementById('live-clock').textContent = now.toLocaleTimeString(undefined, options);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
+
+{% endblock %}

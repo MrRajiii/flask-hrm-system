@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h2>Company Positions</h2>
+    <a href="{{ url_for('add_position') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>New Position
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Annual Salary</th>
+                    <th>Monthly Budget</th>
+                    <th>Active Employees</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pos in positions %}
+                <tr>
+                    <td class="fw-bold">{{ pos.title }}</td>
+                    <td>${{ "{:,.2f}".format(pos.base_salary) }}</td>
+                    <td class="text-muted">${{ "{:,.2f}".format(pos.base_salary / 12) }}</td>
+                    <td>
+                        <span class="badge rounded-pill bg-info text-dark">
+                            {{ pos.employees|length }} Members
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

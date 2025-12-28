@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">My Payslips</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Month/Year</th>
+                        <th>Base Salary</th>
+                        <th>Net Pay</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>December 2025</td>
+                        <td>${{ "{:,.2f}".format(current_user.job_position.base_salary / 12) if current_user.job_position else '0.00' }}</td>
+                        <td>${{ "{:,.2f}".format(current_user.job_position.base_salary / 12) if current_user.job_position else '0.00' }}</td>
+                        <td><button class="btn btn-sm btn-outline-danger"><i class="bi bi-file-pdf"></i> Download</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

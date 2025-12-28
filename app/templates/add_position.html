@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('view_positions') }}">Positions</a></li>
+                <li class="breadcrumb-item active">Add New</li>
+            </ol>
+        </nav>
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Create Company Position</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Position Title</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. Senior Software Engineer" required>
+                        <div class="form-text">This title will be visible in the Org Chart.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Annual Base Salary ($)</label>
+                        <input type="number" step="0.01" name="base_salary" class="form-control" placeholder="0.00" required>
+                        <div class="form-text">Used for monthly payroll calculations.</div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Save Position</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
