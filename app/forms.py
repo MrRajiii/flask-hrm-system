@@ -13,11 +13,12 @@ class RegistrationForm(FlaskForm):
 
     # Updated Department choices to align with new roles if necessary
     department = SelectField('Department', choices=[
+        ('', 'Select Department'),  # Added an empty default choice
         ('IT', 'IT'),
         ('HR', 'HR'),
         ('Sales', 'Sales'),
         ('Executive', 'Executive')
-    ])
+    ], validators=[DataRequired()])
 
     # NEW: Role selection for strict access control
     role = SelectField('Access Level', choices=[
@@ -31,13 +32,14 @@ class RegistrationForm(FlaskForm):
     confirm_password = PasswordField('Confirm Password',
                                      validators=[DataRequired(), EqualTo('password')])
 
-    position = SelectField('Position', coerce=int)
+    position = SelectField('Position', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Create Account')
 
     def __init__(self, *args, **kwargs):
         super(RegistrationForm, self).__init__(*args, **kwargs)
         # Dynamically load positions from database into the dropdown
         # Added a check to prevent errors if the DB isn't initialized yet
+        self.position.choices = []
         try:
             self.position.choices = [(p.id, p.title)
                                      for p in Position.query.all()]

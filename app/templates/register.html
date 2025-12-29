@@ -21,19 +21,20 @@
                     <div class="mb-3">
                         {{ form.role.label(class="form-label text-primary fw-bold") }}
                         {{ form.role(class="form-select border-primary") }}
-                        <small class="text-muted">This determines your access level in the system.</small>
+                        <small class="text-muted">This determines access level.</small>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             {{ form.department.label(class="form-label") }}
-                            {{ form.department(class="form-control") }}
+                            {{ form.department(class="form-select", id="department") }}
                         </div>
                         <div class="col-md-6 mb-3">
                             {{ form.position.label(class="form-label") }}
-                            {{ form.position(class="form-control") }}
+                            {{ form.position(class="form-select", id="position") }}
                         </div>
                     </div>
+
                     <div class="mb-3">
                         {{ form.password.label(class="form-label") }}
                         {{ form.password(class="form-control") }}
@@ -50,4 +51,45 @@
         </div>
     </div>
 </div>
+
+<script>
+    const departmentSelect = document.getElementById('department');
+    const positionSelect = document.getElementById('position');
+
+    departmentSelect.addEventListener('change', function() {
+        const deptName = this.value;
+
+        if (!deptName) {
+            positionSelect.innerHTML = '<option value="">Select Department First</option>';
+            return;
+        }
+
+        positionSelect.innerHTML = '<option value="">Loading...</option>';
+
+        // Use encodeURIComponent just in case there are spaces in the name
+        fetch(`/get-positions/${encodeURIComponent(deptName)}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Server returned an error');
+                return response.json();
+            })
+            .then(data => {
+                positionSelect.innerHTML = ''; 
+                if (data.positions.length === 0) {
+                    positionSelect.innerHTML = '<option value="">No positions found</option>';
+                } else {
+                    data.positions.forEach(pos => {
+                        let opt = document.createElement('option');
+                        opt.value = pos.id;
+                        opt.textContent = pos.title;
+                        positionSelect.appendChild(opt);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                positionSelect.innerHTML = '<option value="">Error loading positions</option>';
+            });
+    });
+</script>
+
 {% endblock %}

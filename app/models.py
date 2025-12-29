@@ -7,32 +7,35 @@ from datetime import datetime
 def load_user(user_id):
     return Employee.query.get(int(user_id))
 
+# --- 1. EMPLOYEE MODEL ---
+
 
 class Employee(db.Model, UserMixin):
-    status = db.Column(db.String(20), default='Active')
-    
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
-    # 'Admin' for CEO/Manager
+    # HR Team, Company Owner, Manager, etc.
     role = db.Column(db.String(20), default='Employee')
     department = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(20), default='Active')
 
-    # Relationships
-    # This links the employee to a specific Position ID
+    # Foreign Key for Position
     position_id = db.Column(db.Integer, db.ForeignKey('position.id'))
 
-    # Back-references to track activity
+    # Relationships (backrefs defined in other models appear here automatically)
+    # Accessible via: self.job_position, self.attendance_records, self.leaves, self.managed_clients
+
     attendance_records = db.relationship(
         'Attendance', backref='employee', lazy=True)
     leaves = db.relationship('LeaveRequest', backref='employee', lazy=True)
     managed_clients = db.relationship('Client', backref='employee', lazy=True)
 
     def __repr__(self):
-        return f"Employee('{self.full_name}', '{self.email}', '{self.department}')"
+        return f"Employee('{self.full_name}', '{self.email}', '{self.role}')"
 
 
+# --- 2. ATTENDANCE MODEL ---
 class Attendance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     check_in = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -41,6 +44,7 @@ class Attendance(db.Model):
         'employee.id'), nullable=False)
 
 
+# --- 3. LEAVE REQUEST MODEL ---
 class LeaveRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     leave_type = db.Column(db.String(20), nullable=False)
@@ -57,14 +61,22 @@ class LeaveRequest(db.Model):
         return f"LeaveRequest('{self.leave_type}', '{self.status}')"
 
 
+# --- 4. POSITION MODEL ---
 class Position(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False, unique=True)
     base_salary = db.Column(db.Float, default=0.0)
-    # The backref 'job_position' allows you to do: employee.job_position.title
+    department = db.Column(db.String(100), nullable=False)
+
+    # This creates the link:
+    # employee.job_position -> returns Position object
+    # position.employees    -> returns list of Employees
     employees = db.relationship('Employee', backref='job_position', lazy=True)
 
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
 
+
+# --- 5. CLIENT MODEL ---
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(150), nullable=False)
@@ -73,3 +85,10 @@ class Client(db.Model):
     phone = db.Column(db.String(20))
     status = db.Column(db.String(20), default='Active')
     assigned_manager_id = db.Column(db.Integer, db.ForeignKey('employee.id'))
+
+
+# --- 6. DEPARTMENT MODEL ---
+class Department(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    positions = db.relationship('Position', backref='dept', lazy=True)

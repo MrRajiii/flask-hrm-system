@@ -6,8 +6,24 @@ from flask_login import login_user, current_user, logout_user, login_required
 from flask import current_app as app
 from functools import wraps
 from datetime import datetime
+from flask import jsonify
 
 # --- 1. ACCESS CONTROL DECORATORS ---
+
+
+@app.route("/get-positions/<string:dept_name>")
+def get_positions(dept_name):
+    # Search the Position table for the department string name
+    print(f"DEBUG: JavaScript requested positions for: {dept_name}")
+    positions = Position.query.filter_by(department=dept_name).all()
+
+    pos_list = []
+    for pos in positions:
+        pos_list.append({'id': pos.id, 'title': pos.title})
+
+    return jsonify({
+        'positions': [{'id': p.id, 'title': p.title} for p in positions]
+    })
 
 
 def owner_required(f):
@@ -76,30 +92,61 @@ def dashboard():
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
-    # Only HR or Owners can onboard new people
-    if current_user.is_authenticated and current_user.role not in ['HR Team', 'Company Owner']:
-        return redirect(url_for('dashboard'))
+    # 1. Access Control: Only HR or Owners can onboard new people
+    #if not current_user.is_authenticated or current_user.role not in ['HR Team', 'Company Owner']:
+        #flash('You do not have permission to access this page.', 'danger')
+        #return redirect(url_for('dashboard'))
 
     form = RegistrationForm()
-    form.position.choices = [(p.id, p.title) for p in Position.query.all()]
 
+    # 2. Populate Department Choices (Unique names from the Position table)
+    # This fetches all unique department names to fill the first dropdown
+    depts = db.session.query(Position.department).distinct().all()
+    form.department.choices = [(d[0], d[0]) for d in depts]
+
+    # 3. Dynamic Position Logic
+    if request.method == 'POST':
+        # During POST, we populate choices with ALL positions.
+        # This prevents the "Not a valid choice" validation error because
+        # the submitted ID will be found in this full list.
+        form.position.choices = [(p.id, p.title) for p in Position.query.all()]
+    else:
+        # During GET (initial load), we only show positions for the first department
+        if depts:
+            first_dept = depts[0][0]
+            positions = Position.query.filter_by(department=first_dept).all()
+            form.position.choices = [(p.id, p.title) for p in positions]
+        else:
+            form.position.choices = []
+
+    # 4. Form Submission Handling
     if form.validate_on_submit():
         hashed_pw = bcrypt.generate_password_hash(
             form.password.data).decode('utf-8')
+
+        # Create the new Employee object
         user = Employee(
             full_name=form.full_name.data,
             email=form.email.data,
             password=hashed_pw,
             department=form.department.data,
-            position_id=form.position.data,
+            position_id=form.position.data,  # This stores the integer ID
             role=form.role.data,
             status='Active'
         )
-        db.session.add(user)
-        db.session.commit()
-        flash(
-            f'Account created for {form.full_name.data} as {form.role.data}!', 'success')
-        return redirect(url_for('login'))
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+            flash(
+                f'Account created for {form.full_name.data} successfully!', 'success')
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            flash(
+                'An error occurred while creating the account. Please try again.', 'danger')
+            print(f"Error: {e}")
+
     return render_template('register.html', title='Register', form=form)
 
 
@@ -218,7 +265,16 @@ def view_clients():
 @hr_required
 def payroll():
     employees = Employee.query.all()
-    return render_template('payroll.html', employees=employees)
+    total_payout = 0
+
+    for emp in employees:
+        # We use .job_position because that is the name defined in the backref
+        if emp.job_position and emp.job_position.base_salary:
+            total_payout += (emp.job_position.base_salary / 12)
+
+    return render_template('payroll.html',
+                           employees=employees,
+                           total_payout=total_payout)
 
 
 @app.route("/org-chart")
@@ -284,3 +340,28 @@ def attendance():
         .paginate(page=page, per_page=10)
 
     return render_template('attendance.html', title='My Attendance', records=records)
+
+
+@app.route("/positions")
+@login_required
+@owner_required
+def view_positions():
+    positions = Position.query.all()
+    return render_template('positions.html', positions=positions)
+
+
+@app.route("/positions/add", methods=['GET', 'POST'])
+@login_required
+@owner_required
+def add_position():
+    # You'll eventually need a PositionForm in forms.py for this
+    # For now, this will just render a placeholder or the form page
+    return render_template('add_position.html', title='Add New Position')
+
+
+@app.route("/clients/add", methods=['GET', 'POST'])
+@login_required
+@owner_required
+def add_client():
+    # This is a placeholder until you create the ClientForm
+    return render_template('add_client.html', title='Add New Client')
