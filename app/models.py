@@ -92,3 +92,27 @@ class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     positions = db.relationship('Position', backref='dept', lazy=True)
+
+
+class PayrollRecord(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey(
+        'employee.id'), nullable=False)
+    amount_paid = db.Column(db.Float, nullable=False)
+    date_processed = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow)
+    # e.g., "December 2025"
+    month_year = db.Column(db.String(20), nullable=False)
+
+    employee = db.relationship(
+        'Employee', backref=db.backref('payroll_history', lazy=True))
+
+
+class Expense(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(200), nullable=False)
+    # e.g., Utilities, Rent, Hardware
+    category = db.Column(db.String(50), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    date_incurred = db.Column(db.Date, nullable=False)
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)

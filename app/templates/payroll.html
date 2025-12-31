@@ -1,37 +1,96 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h2>Payroll Management</h2>
-    <div class="text-end">
-        <span class="text-muted">Est. Monthly Total:</span>
-        <h3 class="text-success">${{ "{:,.2f}".format(total_payout | default(0)) }}</h3>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">Finance: Salary Processing</h2>
+            <p class="text-muted small">Review and commit monthly payroll records</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-success p-2">Cycle: {{ datetime.utcnow().strftime('%B %Y') }}</span>
+            <form action="{{ url_for('process_all_salaries') }}" method="POST">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('WARNING: You are about to generate payment records for all active employees. This cannot be undone. Proceed?')">
+                    <i class="bi bi-wallet2 me-2"></i>Process All Salaries
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-dark text-white">
+                <div class="card-body">
+                    <h6 class="text-secondary text-uppercase small fw-bold">Estimated Monthly Payout</h6>
+                    <h2 class="display-6">${{ "{:,.2f}".format(total_payout) }}</h2>
+                    <hr class="border-secondary">
+                    <p class="mb-0 small text-secondary">Total active staff: {{ employees|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 text-primary"><i class="bi bi-list-ul me-2"></i>Payroll Ledger</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Employee</th>
+                        <th>Position</th>
+                        <th>Annual Salary</th>
+                        <th>Monthly Payout</th>
+                        <th>Last Paid Cycle</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ emp.full_name }}</div>
+                            <small class="text-muted">{{ emp.email }}</small>
+                        </td>
+                        <td>{{ emp.job_position.title if emp.job_position else 'N/A' }}</td>
+                        <td>${{ "{:,.2f}".format(emp.job_position.base_salary if emp.job_position else 0) }}</td>
+                        <td class="text-success fw-bold">
+                            ${{ "{:,.2f}".format((emp.job_position.base_salary / 12) if emp.job_position else 0) }}
+                        </td>
+                        <td>
+                            {% if emp.payroll_history %}
+                                <span class="badge bg-light text-dark border">
+                                    <i class="bi bi-clock-history me-1"></i>{{ emp.payroll_history[-1].month_year }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted italic small">No history</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill {% if emp.status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ emp.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-people mb-2 d-block fs-2"></i>
+                            No active employees found in the system.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Employee</th>
-                    <th>Position</th>
-                    <th>Annual Salary</th>
-                    <th>Monthly Pay</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for emp in employees %}
-                <tr>
-                    <td>{{ emp.full_name }}</td>
-                    <td>{{ emp.job_position.title if emp.job_position else 'N/A' }}</td>
-                    <td>${{ "{:,.2f}".format(emp.job_position.base_salary) if emp.job_position else '0.00' }}</td>
-                    <td class="fw-bold">${{ "{:,.2f}".format(emp.job_position.base_salary / 12) if emp.job_position else '0.00' }}</td>
-                    <td><button class="btn btn-outline-primary btn-sm">Process Pay</button></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+{# Extra CSS for a professional look #}
+<style>
+    .card { transition: transform 0.2s; }
+    .table thead th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .text-success { color: #198754 !important; }
+</style>
+
 {% endblock %}

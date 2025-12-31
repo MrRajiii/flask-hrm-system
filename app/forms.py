@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, FloatField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from app.models import Employee, Position
 from wtforms.fields import DateField
@@ -24,6 +24,7 @@ class RegistrationForm(FlaskForm):
     role = SelectField('Access Level', choices=[
         ('Employee', 'Employee'),
         ('HR Team', 'HR Team'),
+        ('Finance', 'Finance'),
         ('Manager', 'Manager'),
         ('Company Owner', 'Company Owner')
     ], validators=[DataRequired()])
@@ -85,3 +86,37 @@ class ChangePasswordForm(FlaskForm):
     confirm_password = PasswordField('Confirm New Password',
                                       validators=[DataRequired(), EqualTo('new_password')])
     submit = SubmitField('Change Password')
+
+
+class PositionForm(FlaskForm):
+    title = StringField('Position Title', validators=[DataRequired()])
+    department = SelectField('Department', choices=[
+        ('IT', 'IT'), ('HR', 'HR'), ('Sales', 'Sales'), ('Executive', 'Executive')
+    ], validators=[DataRequired()])
+    base_salary = FloatField('Annual Base Salary', validators=[DataRequired()])
+    submit = SubmitField('Save Position')
+
+
+class ClientForm(FlaskForm):
+    company_name = StringField('Company Name', validators=[DataRequired()])
+    contact_person = StringField('Contact Person')
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    phone = StringField('Phone Number')
+    submit = SubmitField('Add Client')
+
+
+class ExpenseForm(FlaskForm):
+    description = StringField('Description', validators=[DataRequired()])
+    category = SelectField('Category', choices=[
+        ('Utilities', 'Utilities'),
+        ('Rent', 'Rent'),
+        ('Software', 'Software/Subscriptions'),
+        ('Marketing', 'Marketing'),
+        ('Office Supplies', 'Office Supplies'),
+        ('Travel', 'Travel'),
+        ('Other', 'Other')
+    ], validators=[DataRequired()])
+    amount = FloatField('Amount', validators=[DataRequired()])
+    date_incurred = DateField(
+        'Date Incurred', format='%Y-%m-%d', validators=[DataRequired()])
+    submit = SubmitField('Log Expense')

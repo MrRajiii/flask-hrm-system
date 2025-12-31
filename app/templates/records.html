@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Company Records</h3>
+    <hr>
+
+    <ul class="nav nav-tabs" id="recordTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button">Attendance Log</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="leaves-tab" data-bs-toggle="tab" data-bs-target="#leaves" type="button">All Leave Requests</button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3" id="recordTabsContent">
+        <div class="tab-pane fade show active" id="attendance" role="tabpanel">
+            <div class="card border-0 shadow-sm">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance %}
+                        <tr>
+                            <td>{{ record.employee.full_name }}</td>
+                            <td>{{ record.check_in.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ record.check_out.strftime('%H:%M') if record.check_out else 'Still In' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="leaves" role="tabpanel">
+            <div class="card border-0 shadow-sm">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in leaves %}
+                        <tr>
+                            <td>{{ leave.employee.full_name }}</td>
+                            <td>{{ leave.leave_type }}</td>
+                            <td>
+                                <span class="badge {% if leave.status == 'Approved' %}bg-success{% elif leave.status == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ leave.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

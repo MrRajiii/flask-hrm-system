@@ -13,6 +13,10 @@ def seed_database():
         print("Creating positions...")
         # 2. Define Positions grouped by Department
         positions_data = [
+            # Finance Department
+            {'title': 'Finance Manager', 'dept': 'Finance', 'salary': 55000},
+            {'title': 'Accountant', 'dept': 'Finance', 'salary': 45000},
+            
             # IT Department
             {'title': 'Software Engineer', 'dept': 'IT', 'salary': 60000},
             {'title': 'IT Support Specialist', 'dept': 'IT', 'salary': 35000},

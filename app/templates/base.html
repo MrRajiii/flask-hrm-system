@@ -16,6 +16,7 @@
         .nav-link { color: #333; font-weight: 500; display: flex; align-items: center; border-radius: 5px; margin: 2px 10px; }
         .nav-link i { margin-right: 10px; font-size: 1.1rem; }
         .nav-link:hover { color: #0d6efd; background: #f8f9fa; }
+        .nav-link.active { color: #0d6efd; background: #eef4ff; }
     </style>
 </head>
 <body class="bg-light">
@@ -25,7 +26,7 @@
         <div class="navbar-nav w-100 d-flex flex-row justify-content-end px-3">
             {% if current_user.is_authenticated %}
                 <span class="nav-link px-3 text-white">Role: <span class="badge bg-primary ms-1">{{ current_user.role }}</span></span>
-                <a class="nav-link px-3 text-danger" href="{{ url_for('logout') }}">Sign out</a>
+                <a class="nav-link px-3 text-danger" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Sign out</a>
             {% endif %}
         </div>
     </header>
@@ -43,32 +44,51 @@
                         </li>
                         <hr class="mx-3">
 
-                        {# --- 1. EMPLOYEES ONLY --- #}
-                        {% if current_user.role == 'Employee' %}
-                        <h6 class="sidebar-heading mt-2 mb-1">Self-Service</h6>
+                        {# --- GENERAL ACCESS (All users can see profile) --- #}
+                        <h6 class="sidebar-heading mt-2 mb-1">Personal</h6>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}"><i class="bi bi-person-circle"></i> My Profile</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('apply_leave') }}"><i class="bi bi-calendar-plus"></i> Request Leave</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('attendance') }}"><i class="bi bi-clock-history"></i> Attendance</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('my_payslips') }}"><i class="bi bi-file-earmark-pdf"></i> My Payslips</a></li>
-
-                        {# --- 2. HR TEAM ONLY --- #}
-                        {% elif current_user.role == 'HR Team' %}
-                        <h6 class="sidebar-heading mt-2 mb-1">HR Operations</h6>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('attendance') }}"><i class="bi bi-clock-history"></i> My Attendance</a></li>
+                        
+                        {% if current_user.role in ['Finance', 'Company Owner'] %}
+                        <h6 class="sidebar-heading mt-4 mb-1">Financial Management</h6>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('payroll') }}">
+                                <i class="bi bi-bank"></i> Payroll Processing
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('manage_expenses') }}">
+                                <i class="bi bi-graph-up-arrow"></i> Company Expenses
+                            </a>
+                        </li>
+                        {% endif %}
+                        {# --- 1. HR TEAM & OWNER OPERATIONS --- #}
+                        {% if current_user.role in ['HR Team', 'Company Owner'] %}
+                        <h6 class="sidebar-heading mt-4 mb-1">HR & Operations</h6>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}"><i class="bi bi-person-plus"></i> Onboarding</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('payroll') }}"><i class="bi bi-cash-coin"></i> Payroll</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-file-earmark-person"></i> Records</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('payroll') }}"><i class="bi bi-cash-coin"></i> Payroll Processing</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_records') }}"><i class="bi bi-file-earmark-person"></i> Company Records</a></li>
+                        {% endif %}
 
-                        {# --- 3. MANAGERS ONLY --- #}
-                        {% elif current_user.role == 'Manager' %}
-                        <h6 class="sidebar-heading mt-2 mb-1">Management</h6>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('org_chart') }}"><i class="bi bi-people"></i> Team Attendance</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-check2-square"></i> Approve Leaves</a></li>
+                        {# --- 2. MANAGERS ONLY --- #}
+                        {% if current_user.role == 'Manager' %}
+                        <h6 class="sidebar-heading mt-4 mb-1">Management</h6>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('org_chart') }}"><i class="bi bi-people"></i> Team View</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}"><i class="bi bi-check2-square"></i> Leave Approvals</a></li>
+                        {% endif %}
 
-                        {# --- 4. COMPANY OWNER ONLY --- #}
-                        {% elif current_user.role == 'Company Owner' %}
-                        <h6 class="sidebar-heading mt-2 mb-1">Executive Suite</h6>
+                        {# --- 3. COMPANY OWNER ONLY (System Management) --- #}
+                        {% if current_user.role == 'Company Owner' %}
+                        <h6 class="sidebar-heading mt-4 mb-1">Executive Suite</h6>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('view_positions') }}"><i class="bi bi-sliders"></i> System Config</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('view_clients') }}"><i class="bi bi-building-up"></i> Clients</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('view_clients') }}"><i class="bi bi-building-up"></i> Client Database</a></li>
+                        {% endif %}
+
+                        {# --- 4. EMPLOYEE SELF-SERVICE --- #}
+                        {% if current_user.role == 'Employee' %}
+                        <h6 class="sidebar-heading mt-4 mb-1">Services</h6>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('apply_leave') }}"><i class="bi bi-calendar-plus"></i> Request Leave</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('my_payslips') }}"><i class="bi bi-file-earmark-pdf"></i> My Payslips</a></li>
                         {% endif %}
 
                     </ul>
@@ -81,7 +101,7 @@
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
-                                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                                <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm">
                                     {{ message }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                 </div>

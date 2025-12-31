@@ -1,7 +1,7 @@
 from flask import render_template, url_for, flash, redirect, request, abort
 from app import db, bcrypt
-from app.forms import RegistrationForm, LoginForm, LeaveForm, UpdateProfileForm, ChangePasswordForm
-from app.models import Employee, Attendance, Client, Position, LeaveRequest
+from app.forms import RegistrationForm, LoginForm, LeaveForm, UpdateProfileForm, ChangePasswordForm, PositionForm, ClientForm, ExpenseForm
+from app.models import Employee, Attendance, Client, Position, LeaveRequest, PayrollRecord, Expense
 from flask_login import login_user, current_user, logout_user, login_required
 from flask import current_app as app
 from functools import wraps
@@ -9,6 +9,16 @@ from datetime import datetime
 from flask import jsonify
 
 # --- 1. ACCESS CONTROL DECORATORS ---
+
+
+def finance_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.role not in ['Finance', 'Company Owner']:
+            flash('Access restricted to Finance department.', 'danger')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 @app.route("/get-positions/<string:dept_name>")
@@ -262,7 +272,7 @@ def view_clients():
 
 @app.route("/payroll")
 @login_required
-@hr_required
+@finance_required
 def payroll():
     employees = Employee.query.all()
     total_payout = 0
@@ -274,7 +284,8 @@ def payroll():
 
     return render_template('payroll.html',
                            employees=employees,
-                           total_payout=total_payout)
+                           total_payout=total_payout,
+                           datetime=datetime)
 
 
 @app.route("/org-chart")
@@ -354,14 +365,98 @@ def view_positions():
 @login_required
 @owner_required
 def add_position():
-    # You'll eventually need a PositionForm in forms.py for this
-    # For now, this will just render a placeholder or the form page
-    return render_template('add_position.html', title='Add New Position')
+    form = PositionForm()
+    if form.validate_on_submit():
+        new_pos = Position(
+            title=form.title.data,
+            department=form.department.data,
+            base_salary=form.base_salary.data
+        )
+        db.session.add(new_pos)
+        db.session.commit()
+        flash('New position added successfully!', 'success')
+        return redirect(url_for('view_positions'))
+    return render_template('add_position.html', form=form)
 
 
 @app.route("/clients/add", methods=['GET', 'POST'])
 @login_required
 @owner_required
 def add_client():
-    # This is a placeholder until you create the ClientForm
-    return render_template('add_client.html', title='Add New Client')
+    form = ClientForm()
+    if form.validate_on_submit():
+        new_client = Client(
+            company_name=form.company_name.data,
+            contact_person=form.contact_person.data,
+            email=form.email.data,
+            phone=form.phone.data
+        )
+        db.session.add(new_client)
+        db.session.commit()
+        flash('Client added successfully!', 'success')
+        return redirect(url_for('view_clients'))
+    return render_template('add_client.html', form=form)
+
+
+@app.route("/admin/records")
+@login_required
+@hr_required
+def admin_records():
+    all_attendance = Attendance.query.order_by(
+        Attendance.check_in.desc()).limit(50).all()
+    all_leaves = LeaveRequest.query.order_by(
+        LeaveRequest.date_posted.desc()).all()
+    return render_template('records.html', attendance=all_attendance, leaves=all_leaves)
+
+
+@app.route("/finance/process-payroll", methods=['POST'])
+@login_required
+@finance_required
+def process_all_salaries():
+    employees = Employee.query.filter_by(status='Active').all()
+    current_month = datetime.now().strftime('%B %Y')
+
+    # Simple check to prevent double-processing same month
+    existing_record = PayrollRecord.query.filter_by(
+        month_year=current_month).first()
+    if existing_record:
+        flash(
+            f'Payroll for {current_month} has already been processed!', 'warning')
+        return redirect(url_for('payroll'))
+
+    for emp in employees:
+        if emp.job_position:
+            monthly_pay = emp.job_position.base_salary / 12
+            record = PayrollRecord(
+                employee_id=emp.id,
+                amount_paid=monthly_pay,
+                month_year=current_month
+            )
+            db.session.add(record)
+
+    db.session.commit()
+    flash(
+        f'Successfully processed payroll for {len(employees)} employees for {current_month}.', 'success')
+    return redirect(url_for('payroll'))
+
+
+@app.route("/finance/expenses", methods=['GET', 'POST'])
+@login_required
+@finance_required
+def manage_expenses():
+    form = ExpenseForm()
+    if form.validate_on_submit():
+        new_expense = Expense(
+            description=form.description.data,
+            category=form.category.data,
+            amount=form.amount.data,
+            date_incurred=form.date_incurred.data
+        )
+        db.session.add(new_expense)
+        db.session.commit()
+        flash('Expense logged successfully!', 'success')
+        return redirect(url_for('manage_expenses'))
+
+    all_expenses = Expense.query.order_by(Expense.date_incurred.desc()).all()
+    total_expenses = sum(exp.amount for exp in all_expenses)
+    return render_template('expenses.html', form=form, expenses=all_expenses, total=total_expenses)
