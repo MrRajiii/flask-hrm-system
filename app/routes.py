@@ -49,7 +49,8 @@ def owner_required(f):
 def hr_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.role != 'HR Team':
+        # Add 'Company Owner' to the allowed list
+        if current_user.role not in ['HR Team', 'Company Owner']:
             flash('Access denied. HR Team privileges required.', 'danger')
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
@@ -59,7 +60,8 @@ def hr_required(f):
 def manager_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.role != 'Manager':
+        # Add 'Company Owner' to the allowed list
+        if current_user.role not in ['Manager', 'Company Owner']:
             flash('Access denied. Manager privileges required.', 'danger')
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
@@ -402,6 +404,10 @@ def add_client():
 @login_required
 @hr_required
 def admin_records():
+    if current_user.role not in ['HR Team', 'Company Owner']:
+        flash('Access denied. Admin privileges required.', 'danger')
+        return redirect(url_for('dashboard'))
+    
     all_attendance = Attendance.query.order_by(
         Attendance.check_in.desc()).limit(50).all()
     all_leaves = LeaveRequest.query.order_by(
@@ -460,3 +466,17 @@ def manage_expenses():
     all_expenses = Expense.query.order_by(Expense.date_incurred.desc()).all()
     total_expenses = sum(exp.amount for exp in all_expenses)
     return render_template('expenses.html', form=form, expenses=all_expenses, total=total_expenses)
+
+
+@app.route("/employee/update_status/<int:emp_id>", methods=['POST'])
+@login_required
+def update_status(emp_id):
+    if current_user.role not in ['HR Team', 'Manager', 'Company Owner']:
+        flash('Unauthorized', 'danger')
+        return redirect(url_for('dashboard'))
+
+    employee = Employee.query.get_or_404(emp_id)
+    employee.status = 'Inactive' if employee.status == 'Active' else 'Active'
+    db.session.commit()
+    flash(f'Status updated for {employee.full_name}', 'success')
+    return redirect(url_for('org_chart'))

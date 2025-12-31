@@ -44,11 +44,12 @@
                         </li>
                         <hr class="mx-3">
 
-                        {# --- GENERAL ACCESS (All users can see profile) --- #}
+                        {# --- PERSONAL (All Users) --- #}
                         <h6 class="sidebar-heading mt-2 mb-1">Personal</h6>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}"><i class="bi bi-person-circle"></i> My Profile</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('attendance') }}"><i class="bi bi-clock-history"></i> My Attendance</a></li>
                         
+                        {# --- FINANCIAL MANAGEMENT (Finance & Owner) --- #}
                         {% if current_user.role in ['Finance', 'Company Owner'] %}
                         <h6 class="sidebar-heading mt-4 mb-1">Financial Management</h6>
                         <li class="nav-item">
@@ -62,29 +63,29 @@
                             </a>
                         </li>
                         {% endif %}
-                        {# --- 1. HR TEAM & OWNER OPERATIONS --- #}
+
+                        {# --- HR & OPERATIONS (HR Team & Owner) --- #}
                         {% if current_user.role in ['HR Team', 'Company Owner'] %}
                         <h6 class="sidebar-heading mt-4 mb-1">HR & Operations</h6>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}"><i class="bi bi-person-plus"></i> Onboarding</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('payroll') }}"><i class="bi bi-cash-coin"></i> Payroll Processing</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_records') }}"><i class="bi bi-file-earmark-person"></i> Company Records</a></li>
                         {% endif %}
 
-                        {# --- 2. MANAGERS ONLY --- #}
-                        {% if current_user.role == 'Manager' %}
+                        {# --- MANAGEMENT (Managers & Owner) --- #}
+                        {% if current_user.role in ['Manager', 'Company Owner'] %}
                         <h6 class="sidebar-heading mt-4 mb-1">Management</h6>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('org_chart') }}"><i class="bi bi-people"></i> Team View</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}"><i class="bi bi-check2-square"></i> Leave Approvals</a></li>
                         {% endif %}
 
-                        {# --- 3. COMPANY OWNER ONLY (System Management) --- #}
+                        {# --- EXECUTIVE SUITE (Owner Only) --- #}
                         {% if current_user.role == 'Company Owner' %}
                         <h6 class="sidebar-heading mt-4 mb-1">Executive Suite</h6>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('view_positions') }}"><i class="bi bi-sliders"></i> System Config</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('view_clients') }}"><i class="bi bi-building-up"></i> Client Database</a></li>
                         {% endif %}
 
-                        {# --- 4. EMPLOYEE SELF-SERVICE --- #}
+                        {# --- EMPLOYEE SERVICES (Employees Only) --- #}
                         {% if current_user.role == 'Employee' %}
                         <h6 class="sidebar-heading mt-4 mb-1">Services</h6>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('apply_leave') }}"><i class="bi bi-calendar-plus"></i> Request Leave</a></li>
