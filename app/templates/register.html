@@ -1,62 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6">
+    <div class="col-md-5">
+        
+        <div class="text-center mb-4">
+            <div class="bg-light d-inline-block rounded-circle p-2 mb-2 shadow-sm">
+                <i class="bi bi-building-fill text-primary" style="font-size: 1.5rem;"></i>
+            </div>
+            <h4 class="fw-bold mb-0">NexGen Systems</h4>
+            <small class="text-muted">Employee Onboarding Portal</small>
+        </div>
+
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-dark text-white text-center">
-                <h4 class="mb-0">Onboard New Employee</h4>
+            <div class="card-header bg-dark text-white text-center py-3">
+                <h5 class="mb-0">Create New Account</h5>
             </div>
             <div class="card-body p-4">
                 <form method="POST">
                     {{ form.hidden_tag() }}
                     
-                    <h5 class="text-muted mb-3"><i class="bi bi-person-badge me-2"></i>Personal Details</h5>
+                    <h6 class="text-muted border-bottom pb-2 mb-3">Personal Details</h6>
                     <div class="mb-3">
-                        {{ form.full_name.label(class="form-label") }}
-                        {{ form.full_name(class="form-control", placeholder="e.g. John Doe") }}
+                        {{ form.full_name(class="form-control", placeholder="Full Name") }}
                     </div>
                     <div class="mb-3">
-                        {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-control", placeholder="email@company.com") }}
+                        {{ form.email(class="form-control", placeholder="Email Address") }}
                     </div>
 
-                    <hr class="my-4">
-
-                    <h5 class="text-primary mb-3"><i class="bi bi-shield-lock me-2"></i>System Permissions</h5>
+                    <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">System Permissions</h6>
                     <div class="mb-3">
-                        {{ form.role.label(class="form-label fw-bold") }}
                         {{ form.role(class="form-select border-primary", id="access_level") }}
-                        <small class="text-muted">Determines which dashboards and tools this user can access.</small>
                     </div>
 
-                    <hr class="my-4">
-
-                    <h5 class="text-muted mb-3"><i class="bi bi-building me-2"></i>Job Placement</h5>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.department.label(class="form-label") }}
+                    <h6 class="text-muted border-bottom pb-2 mb-3 mt-4">Job Placement</h6>
+                    <div class="row g-2">
+                        <div class="col-md-6">
                             {{ form.department(class="form-select", id="department") }}
                         </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form.position.label(class="form-label") }}
+                        <div class="col-md-6">
                             {{ form.position(class="form-select", id="position") }}
                         </div>
                     </div>
 
-                    <hr class="my-4">
-
-                    <h5 class="text-muted mb-3"><i class="bi bi-key me-2"></i>Security</h5>
-                    <div class="mb-3">
-                        {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control") }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.confirm_password.label(class="form-label") }}
-                        {{ form.confirm_password(class="form-control") }}
+                    <h6 class="text-muted border-bottom pb-2 mb-3 mt-4">Security</h6>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            {{ form.password(class="form-control", placeholder="Password") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.confirm_password(class="form-control", placeholder="Confirm") }}
+                        </div>
                     </div>
 
                     <div class="d-grid mt-4">
-                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                        {{ form.submit(class="btn btn-primary") }}
                     </div>
                 </form>
             </div>

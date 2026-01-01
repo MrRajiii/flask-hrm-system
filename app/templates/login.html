@@ -1,28 +1,44 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row justify-content-center mt-5">
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
     <div class="col-md-4">
-        <div class="card shadow border-0">
-            <div class="card-body p-5">
-                <h3 class="text-center mb-4">HRMS Login</h3>
+        <div class="text-center mb-4">
+            <div class="bg-light d-inline-block rounded-circle p-3 mb-2 shadow-sm border">
+                <i class="bi bi-building-fill text-primary" style="font-size: 2.5rem;"></i>
+            </div>
+            <h2 class="fw-bold mb-0">NexGen Systems</h2>
+            <p class="text-muted small uppercase tracking-wider">HR Management Portal</p>
+        </div>
+
+        <div class="card shadow-lg border-0">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <h5 class="fw-bold">Sign In</h5>
+                    <small class="text-muted">Enter your credentials to access the portal</small>
+                </div>
+                
                 <form method="POST">
                     {{ form.hidden_tag() }}
                     <div class="mb-3">
-                        {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-control form-control-lg") }}
+                        {{ form.email.label(class="form-label small fw-bold") }}
+                        {{ form.email(class="form-control form-control-lg", placeholder="name@company.com") }}
                     </div>
                     <div class="mb-3">
-                        {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control form-control-lg") }}
+                        {{ form.password.label(class="form-label small fw-bold") }}
+                        {{ form.password(class="form-control form-control-lg", placeholder="••••••••") }}
                     </div>
+                    
                     <div class="d-grid mt-4">
-                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                        {{ form.submit(class="btn btn-primary btn-lg shadow-sm") }}
                     </div>
                 </form>
             </div>
-            <div class="card-footer text-center bg-white border-0">
-                <p>New employee? <a href="{{ url_for('register') }}">Register here</a></p>
-            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <p class="text-muted small">
+                <i class="bi bi-shield-lock me-1"></i> Authorized Personnel Only
+            </p>
         </div>
     </div>
 </div>
