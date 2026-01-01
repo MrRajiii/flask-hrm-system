@@ -99,7 +99,11 @@
             <hr>
             <div class="d-grid gap-2">
                 <a href="{{ url_for('register') }}" class="btn btn-primary text-start"><i class="bi bi-person-plus"></i> Onboard New Employee</a>
-                <a href="{{ url_for('payroll') }}" class="btn btn-success text-start"><i class="bi bi-cash-stack"></i> Run Monthly Payroll</a>
+                {% if current_user.role in ['Finance', 'Company Owner'] %}
+                <a href="{{ url_for('payroll') }}" class="btn btn-success text-start">
+                    <i class="bi bi-cash-stack"></i> Run Monthly Payroll
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>
