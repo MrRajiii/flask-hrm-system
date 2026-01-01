@@ -4,26 +4,34 @@
     <div class="col-md-6">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-dark text-white text-center">
-                <h4 class="mb-0">Create New Account</h4>
+                <h4 class="mb-0">Onboard New Employee</h4>
             </div>
             <div class="card-body p-4">
                 <form method="POST">
                     {{ form.hidden_tag() }}
+                    
+                    <h5 class="text-muted mb-3"><i class="bi bi-person-badge me-2"></i>Personal Details</h5>
                     <div class="mb-3">
                         {{ form.full_name.label(class="form-label") }}
-                        {{ form.full_name(class="form-control") }}
+                        {{ form.full_name(class="form-control", placeholder="e.g. John Doe") }}
                     </div>
                     <div class="mb-3">
                         {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-control") }}
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.role.label(class="form-label text-primary fw-bold") }}
-                        {{ form.role(class="form-select border-primary") }}
-                        <small class="text-muted">This determines access level.</small>
+                        {{ form.email(class="form-control", placeholder="email@company.com") }}
                     </div>
 
+                    <hr class="my-4">
+
+                    <h5 class="text-primary mb-3"><i class="bi bi-shield-lock me-2"></i>System Permissions</h5>
+                    <div class="mb-3">
+                        {{ form.role.label(class="form-label fw-bold") }}
+                        {{ form.role(class="form-select border-primary", id="access_level") }}
+                        <small class="text-muted">Determines which dashboards and tools this user can access.</small>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5 class="text-muted mb-3"><i class="bi bi-building me-2"></i>Job Placement</h5>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             {{ form.department.label(class="form-label") }}
@@ -35,6 +43,9 @@
                         </div>
                     </div>
 
+                    <hr class="my-4">
+
+                    <h5 class="text-muted mb-3"><i class="bi bi-key me-2"></i>Security</h5>
                     <div class="mb-3">
                         {{ form.password.label(class="form-label") }}
                         {{ form.password(class="form-control") }}
@@ -43,8 +54,9 @@
                         {{ form.confirm_password.label(class="form-label") }}
                         {{ form.confirm_password(class="form-control") }}
                     </div>
-                    <div class="d-grid">
-                        {{ form.submit(class="btn btn-primary") }}
+
+                    <div class="d-grid mt-4">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
                     </div>
                 </form>
             </div>
@@ -55,7 +67,25 @@
 <script>
     const departmentSelect = document.getElementById('department');
     const positionSelect = document.getElementById('position');
+    const accessLevel = document.getElementById('access_level');
 
+    // SMART LINK: Connect Access Level to Department
+    accessLevel.addEventListener('change', function() {
+        const role = this.value;
+        
+        if (role === 'Finance') {
+            departmentSelect.value = 'Finance';
+        } else if (role === 'HR Team') {
+            departmentSelect.value = 'HR';
+        } else if (role === 'Manager' || role === 'Company Owner') {
+            departmentSelect.value = 'Executive';
+        }
+        
+        // Manually trigger the department change event to update positions
+        departmentSelect.dispatchEvent(new Event('change'));
+    });
+
+    // DYNAMIC POSITIONS: Fetch positions based on department
     departmentSelect.addEventListener('change', function() {
         const deptName = this.value;
 
@@ -66,7 +96,6 @@
 
         positionSelect.innerHTML = '<option value="">Loading...</option>';
 
-        // Use encodeURIComponent just in case there are spaces in the name
         fetch(`/get-positions/${encodeURIComponent(deptName)}`)
             .then(response => {
                 if (!response.ok) throw new Error('Server returned an error');
@@ -91,5 +120,4 @@
             });
     });
 </script>
-
 {% endblock %}
