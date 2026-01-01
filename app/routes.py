@@ -7,6 +7,10 @@ from flask import current_app as app
 from functools import wraps
 from datetime import datetime
 from flask import jsonify
+from fpdf import FPDF
+from flask import send_file, abort
+import io
+from flask import make_response
 
 # --- 1. ACCESS CONTROL DECORATORS ---
 
@@ -480,3 +484,48 @@ def update_status(emp_id):
     db.session.commit()
     flash(f'Status updated for {employee.full_name}', 'success')
     return redirect(url_for('org_chart'))
+
+
+@app.route("/download-payslip/<int:record_id>")
+@login_required
+def download_payslip(record_id):
+    record = PayrollRecord.query.get_or_404(record_id)
+
+    # Security check
+    if record.employee_id != current_user.id and current_user.role != 'Company Owner':
+        abort(403)
+
+    # Initialize PDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("helvetica", 'B', 16)
+
+    # Content
+    pdf.cell(190, 10, "OFFICIAL PAYSLIP", ln=True, align='C')
+    pdf.ln(10)
+    pdf.set_font("helvetica", '', 12)
+    pdf.cell(95, 10, f"Employee: {record.employee.full_name}")
+    pdf.cell(95, 10, f"Period: {record.month_year}", ln=True)
+    pdf.cell(
+        190, 10, f"Position: {record.employee.job_position.title}", ln=True)
+    pdf.ln(5)
+
+    # Amount Box
+    pdf.set_fill_color(230, 230, 230)
+    pdf.cell(140, 10, "Net Payout", border=1, fill=True)
+    pdf.cell(50, 10, f"${'{:,.2f}'.format(record.amount_paid)}",
+             border=1, ln=True, align='C', fill=True)
+
+    # --- THE CRITICAL FIX START ---
+    # Create an in-memory byte stream
+    pdf_output = pdf.output()  # Get PDF as string/bytes
+    buffer = io.BytesIO(pdf_output)
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f"Payslip_{record.month_year.replace(' ', '_')}.pdf",
+        mimetype='application/pdf'
+    )
+    # --- THE CRITICAL FIX END ---

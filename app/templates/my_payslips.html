@@ -16,12 +16,22 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% for record in current_user.payroll_history %}
                     <tr>
-                        <td>December 2025</td>
-                        <td>${{ "{:,.2f}".format(current_user.job_position.base_salary / 12) if current_user.job_position else '0.00' }}</td>
-                        <td>${{ "{:,.2f}".format(current_user.job_position.base_salary / 12) if current_user.job_position else '0.00' }}</td>
-                        <td><button class="btn btn-sm btn-outline-danger"><i class="bi bi-file-pdf"></i> Download</button></td>
+                        <td>{{ record.month_year }}</td>
+                        <td>${{ "{:,.2f}".format(record.amount_paid) }}</td>
+                        <td><span class="badge bg-success">Paid</span></td>
+                        <td>
+                            <a href="{{ url_for('download_payslip', record_id=record.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download me-1"></i> Download
+                            </a>
+                        </td>
                     </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No payslips generated yet.</td>
+                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
