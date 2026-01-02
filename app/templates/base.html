@@ -81,8 +81,21 @@
                         {# --- EXECUTIVE SUITE (Owner Only) --- #}
                         {% if current_user.role == 'Company Owner' %}
                         <h6 class="sidebar-heading mt-4 mb-1">Executive Suite</h6>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('view_positions') }}"><i class="bi bi-sliders"></i> System Config</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('view_clients') }}"><i class="bi bi-building-up"></i> Client Database</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('view_positions') }}">
+                                <i class="bi bi-sliders"></i> System Config
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('view_clients') }}">
+                                <i class="bi bi-building-up"></i> Client Database
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('settings') }}">
+                                <i class="bi bi-gear-fill"></i> Company Settings
+                            </a>
+                        </li>
                         {% endif %}
 
                         {# --- EMPLOYEE SERVICES (Employees Only) --- #}
@@ -91,6 +104,7 @@
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('apply_leave') }}"><i class="bi bi-calendar-plus"></i> Request Leave</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('my_payslips') }}"><i class="bi bi-file-earmark-pdf"></i> My Payslips</a></li>
                         {% endif %}
+                        
 
                     </ul>
                 </div>

@@ -5,9 +5,13 @@
         
         <div class="text-center mb-4">
             <div class="bg-light d-inline-block rounded-circle p-2 mb-2 shadow-sm">
-                <i class="bi bi-building-fill text-primary" style="font-size: 1.5rem;"></i>
+                {% if company_settings.company_logo_url %}
+                    <img src="{{ company_settings.company_logo_url }}" alt="Logo" style="height: 30px;">
+                {% else %}
+                    <i class="bi bi-building-fill text-primary" style="font-size: 1.5rem;"></i>
+                {% endif %}
             </div>
-            <h4 class="fw-bold mb-0">NexGen Systems</h4>
+            <h4 class="fw-bold mb-0">{{ company_settings.company_name }}</h4>
             <small class="text-muted">Employee Onboarding Portal</small>
         </div>
 
@@ -55,6 +59,9 @@
                     <div class="d-grid mt-4">
                         {{ form.submit(class="btn btn-primary") }}
                     </div>
+                    <div class="text-center mt-3">
+                        <small>Already have an account? <a href="{{ url_for('login') }}">Login here</a></small>
+                    </div>
                 </form>
             </div>
         </div>
@@ -66,38 +73,23 @@
     const positionSelect = document.getElementById('position');
     const accessLevel = document.getElementById('access_level');
 
-    // SMART LINK: Connect Access Level to Department
     accessLevel.addEventListener('change', function() {
         const role = this.value;
-        
-        if (role === 'Finance') {
-            departmentSelect.value = 'Finance';
-        } else if (role === 'HR Team') {
-            departmentSelect.value = 'HR';
-        } else if (role === 'Manager' || role === 'Company Owner') {
-            departmentSelect.value = 'Executive';
-        }
-        
-        // Manually trigger the department change event to update positions
+        if (role === 'Finance') departmentSelect.value = 'Finance';
+        else if (role === 'HR Team') departmentSelect.value = 'HR';
+        else if (role === 'Manager' || role === 'Company Owner') departmentSelect.value = 'Executive';
         departmentSelect.dispatchEvent(new Event('change'));
     });
 
-    // DYNAMIC POSITIONS: Fetch positions based on department
     departmentSelect.addEventListener('change', function() {
         const deptName = this.value;
-
         if (!deptName) {
             positionSelect.innerHTML = '<option value="">Select Department First</option>';
             return;
         }
-
         positionSelect.innerHTML = '<option value="">Loading...</option>';
-
         fetch(`/get-positions/${encodeURIComponent(deptName)}`)
-            .then(response => {
-                if (!response.ok) throw new Error('Server returned an error');
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 positionSelect.innerHTML = ''; 
                 if (data.positions.length === 0) {
@@ -110,10 +102,6 @@
                         positionSelect.appendChild(opt);
                     });
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                positionSelect.innerHTML = '<option value="">Error loading positions</option>';
             });
     });
 </script>

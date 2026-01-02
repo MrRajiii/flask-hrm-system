@@ -116,3 +116,21 @@ class Expense(db.Model):
     amount = db.Column(db.Float, nullable=False)
     date_incurred = db.Column(db.Date, nullable=False)
     date_posted = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class CompanySettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(100), default="My Company")
+    company_logo_url = db.Column(
+        db.String(500), nullable=True)  # Link to an image
+    address = db.Column(db.String(200), nullable=True)
+
+    @staticmethod
+    def get_settings():
+        # This helper ensures we always get the first row (the only one)
+        settings = CompanySettings.query.first()
+        if not settings:
+            settings = CompanySettings(company_name="My Company")
+            db.session.add(settings)
+            db.session.commit()
+        return settings

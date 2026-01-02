@@ -1,7 +1,7 @@
 from flask import render_template, url_for, flash, redirect, request, abort
 from app import db, bcrypt
 from app.forms import RegistrationForm, LoginForm, LeaveForm, UpdateProfileForm, ChangePasswordForm, PositionForm, ClientForm, ExpenseForm
-from app.models import Employee, Attendance, Client, Position, LeaveRequest, PayrollRecord, Expense
+from app.models import Employee, Attendance, Client, Position, LeaveRequest, PayrollRecord, Expense, CompanySettings
 from flask_login import login_user, current_user, logout_user, login_required
 from flask import current_app as app
 from functools import wraps
@@ -72,6 +72,11 @@ def manager_required(f):
     return decorated_function
 
 # --- 2. DASHBOARD ---
+
+
+@app.context_processor
+def inject_settings():
+    return dict(company_settings=CompanySettings.get_settings())
 
 
 @app.route("/")
@@ -491,34 +496,59 @@ def update_status(emp_id):
 def download_payslip(record_id):
     record = PayrollRecord.query.get_or_404(record_id)
 
+    # Get the dynamic settings
+    settings = CompanySettings.get_settings()
+
     # Security check
     if record.employee_id != current_user.id and current_user.role != 'Company Owner':
         abort(403)
 
-    # Initialize PDF
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("helvetica", 'B', 16)
 
-    # Content
-    pdf.cell(190, 10, "OFFICIAL PAYSLIP", ln=True, align='C')
+    # --- DYNAMIC HEADER ---
+    pdf.set_font("helvetica", 'B', 20)
+    # Uses the name you set in the Settings page!
+    pdf.cell(190, 10, f"{settings.company_name.upper()}", ln=True, align='C')
+
+    pdf.set_font("helvetica", 'B', 12)
+    pdf.cell(190, 10, "OFFICIAL PAYROLL STATEMENT", ln=True, align='C')
     pdf.ln(10)
-    pdf.set_font("helvetica", '', 12)
-    pdf.cell(95, 10, f"Employee: {record.employee.full_name}")
-    pdf.cell(95, 10, f"Period: {record.month_year}", ln=True)
+
+    # Employee Details
+    pdf.set_font("helvetica", '', 11)
+    pdf.cell(95, 8, f"Employee: {record.employee.full_name}")
     pdf.cell(
-        190, 10, f"Position: {record.employee.job_position.title}", ln=True)
-    pdf.ln(5)
+        95, 8, f"Date: {record.date_processed.strftime('%Y-%m-%d')}", ln=True, align='R')
+    pdf.cell(95, 8, f"ID: #EMP-00{record.employee.id}")
+    pdf.cell(95, 8, f"Period: {record.month_year}", ln=True, align='R')
+    pdf.ln(10)
 
-    # Amount Box
-    pdf.set_fill_color(230, 230, 230)
-    pdf.cell(140, 10, "Net Payout", border=1, fill=True)
+    # Earnings Table
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("helvetica", 'B', 11)
+    pdf.cell(140, 10, "Description", border=1, fill=True)
+    pdf.cell(50, 10, "Amount", border=1, fill=True, ln=True, align='C')
+
+    pdf.set_font("helvetica", '', 11)
+    pdf.cell(140, 10, f"Monthly Salary - {record.month_year}", border=1)
     pdf.cell(50, 10, f"${'{:,.2f}'.format(record.amount_paid)}",
-             border=1, ln=True, align='C', fill=True)
+             border=1, ln=True, align='C')
 
-    # --- THE CRITICAL FIX START ---
-    # Create an in-memory byte stream
-    pdf_output = pdf.output()  # Get PDF as string/bytes
+    # Total
+    pdf.ln(5)
+    pdf.set_font("helvetica", 'B', 12)
+    pdf.cell(140, 10, "NET DISBURSED", border=0, align='R')
+    pdf.cell(50, 10, f"${'{:,.2f}'.format(record.amount_paid)}",
+             border=1, ln=True, align='C')
+
+    # Footer
+    pdf.ln(20)
+    pdf.set_font("helvetica", 'I', 8)
+    pdf.cell(
+        190, 5, f"This is a computer-generated document from {settings.company_name} HRMS.", align='C', ln=True)
+
+    pdf_output = pdf.output()
     buffer = io.BytesIO(pdf_output)
     buffer.seek(0)
 
@@ -528,4 +558,24 @@ def download_payslip(record_id):
         download_name=f"Payslip_{record.month_year.replace(' ', '_')}.pdf",
         mimetype='application/pdf'
     )
-    # --- THE CRITICAL FIX END ---
+
+
+@app.route("/settings", methods=['GET', 'POST'])
+@login_required
+def settings():
+    if current_user.role != 'Company Owner':
+        abort(403)
+
+    settings = CompanySettings.get_settings()
+
+    if request.method == 'POST':
+        settings.company_name = request.form.get('company_name')
+        settings.company_logo_url = request.form.get('logo_url')
+        db.session.commit()
+        flash('Settings updated successfully!', 'success')
+        return redirect(url_for('settings'))
+
+    return render_template('settings.html', settings=settings)
+
+
+
