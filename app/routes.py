@@ -427,6 +427,18 @@ def admin_records():
     return render_template('records.html', pending_users=pending_users, attendance=all_attendance, leaves=all_leaves)
 
 
+@app.route("/admin/reject-user/<int:user_id>")
+@login_required
+@hr_required
+def reject_user(user_id):
+    user = Employee.query.get_or_404(user_id)
+    if user.status == 'Pending':
+        db.session.delete(user)
+        db.session.commit()
+        flash(
+            f'Registration for {user.full_name} has been rejected and removed.', 'info')
+    return redirect(url_for('admin_records'))
+
 @app.route("/finance/process-payroll", methods=['POST'])
 @login_required
 @finance_required
