@@ -9,6 +9,8 @@ from datetime import datetime
 from flask import jsonify
 from fpdf import FPDF
 from flask import send_file, abort
+from werkzeug.utils import secure_filename
+import os
 import io
 from flask import make_response
 
@@ -585,7 +587,18 @@ def settings():
 
     if request.method == 'POST':
         settings.company_name = request.form.get('company_name')
-        settings.company_logo_url = request.form.get('logo_url')
+        if 'logo_file' in request.files:
+            file = request.files['logo_file']
+            if file and file.filename != '':
+                # Secure the name and save it
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+
+                # Save the relative path to the database
+                settings.company_logo_url = url_for(
+                    'static', filename='company_logos/' + filename)
+
         db.session.commit()
         flash('Settings updated successfully!', 'success')
         return redirect(url_for('settings'))

@@ -1,37 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow border-0">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Company Settings</h5>
+<div class="container mt-4">
+    <h3>Company Settings</h3>
+    <hr>
+    <div class="card shadow-sm p-4">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">Company Name</label>
+                <input type="text" name="company_name" class="form-control" value="{{ settings.company_name }}">
             </div>
-            <div class="card-body p-4">
-                <form method="POST">
-                    <div class="mb-3 text-center">
-                        <label class="form-label d-block">Current Branding</label>
-                        <div class="bg-light p-3 rounded mb-2 border">
-                            <h3 class="fw-bold mb-0">{{ settings.company_name }}</h3>
-                        </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Company Logo</label>
+                {% if settings.company_logo_url %}
+                    <div class="mb-2">
+                        <img src="{{ settings.company_logo_url }}" alt="Logo" style="height: 50px;">
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Company Name</label>
-                        <input type="text" name="company_name" class="form-control" value="{{ settings.company_name }}" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Logo URL (Optional)</label>
-                        <input type="text" name="logo_url" class="form-control" value="{{ settings.company_logo_url or '' }}" placeholder="https://link-to-your-logo.png">
-                        <small class="text-muted">For now, use a web link for the logo.</small>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success">Save Changes</button>
-                    </div>
-                </form>
+                {% endif %}
+                <input type="file" name="logo_file" class="form-control" accept="image/*">
+                <small class="text-muted">Upload a PNG or JPG file. Recommended size: 200x50px.</small>
             </div>
-        </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
     </div>
 </div>
 {% endblock %}
