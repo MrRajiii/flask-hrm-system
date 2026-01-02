@@ -153,7 +153,7 @@ def register():
             department=form.department.data,
             position_id=form.position.data,  # This stores the integer ID
             role=form.role.data,
-            status='Active'
+            status='Pending'
         )
 
         try:
@@ -179,6 +179,11 @@ def login():
     if form.validate_on_submit():
         user = Employee.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
+            # NEW: Check if the user is Active
+            if user.status != 'Active':
+                flash('Your account is pending approval. Please contact HR.', 'warning')
+                return redirect(url_for('login'))
+
             login_user(user)
             return redirect(url_for('dashboard'))
         flash('Login Unsuccessful. Check email and password.', 'danger')
@@ -413,15 +418,13 @@ def add_client():
 @login_required
 @hr_required
 def admin_records():
-    if current_user.role not in ['HR Team', 'Company Owner']:
-        flash('Access denied. Admin privileges required.', 'danger')
-        return redirect(url_for('dashboard'))
+    pending_users = Employee.query.filter_by(status='Pending').all()
     
     all_attendance = Attendance.query.order_by(
         Attendance.check_in.desc()).limit(50).all()
     all_leaves = LeaveRequest.query.order_by(
         LeaveRequest.date_posted.desc()).all()
-    return render_template('records.html', attendance=all_attendance, leaves=all_leaves)
+    return render_template('records.html', pending_users=pending_users, attendance=all_attendance, leaves=all_leaves)
 
 
 @app.route("/finance/process-payroll", methods=['POST'])
@@ -578,4 +581,13 @@ def settings():
     return render_template('settings.html', settings=settings)
 
 
+@app.route("/admin/approve-user/<int:user_id>")
+@login_required
+@hr_required
+def approve_user(user_id):
+    user = Employee.query.get_or_404(user_id)
+    user.status = 'Active'
+    db.session.commit()
+    flash(f'Account for {user.full_name} has been approved!', 'success')
+    return redirect(url_for('admin_records'))
 
